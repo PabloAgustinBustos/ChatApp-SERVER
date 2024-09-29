@@ -23,7 +23,7 @@ export const signup = async(req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { username } })
 
     if (user) {
-      const obj = res.status(400).json({ error: "username already exists" })
+      res.status(400).json({ error: "username already exists" })
       return
     }
 
@@ -73,14 +73,14 @@ export const login = async(req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { username } })
 
     if (!user) {
-      const obj = res.status(404).json({ error: "Invalid username" })
+      res.status(404).json({ error: "Invalid username" })
       return
     }
 
     const isPasswordCorrect = await bcryptjs.compare(password, user.password)
 
     if (!isPasswordCorrect) {
-      const obj = res.status(404).json({ error: "Invalid password" })
+      res.status(404).json({ error: "Invalid password" })
       return
     }
 
@@ -103,6 +103,29 @@ export const logout = async(req: Request, res: Response) => {
     res.cookie("jwt", "", { maxAge: 0 })
     res.status(200).json({ message: "Logout successfully" })
   } catch(e) {
+    res.status(500).json({ message: "Internal server error", error: e })
+    return
+  }
+}
+
+export const getMe = async(req: Request, res: Response) => {
+  console.log("getMe")
+  try {
+    console.log("buscando user")
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    console.log("user", user)
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" })
+    }
+
+    res.status(200).json({
+      id: user?.id,
+      fullname: user?.fullname,
+      username: user?.username,
+      profilePicture: user?.profilePicture
+    })
+  } catch (e) {
     res.status(500).json({ message: "Internal server error", error: e })
     return
   }
