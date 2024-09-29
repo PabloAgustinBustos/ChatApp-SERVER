@@ -1,6 +1,6 @@
 import { Router } from "express";
 import protect from "../middlewares/protect";
-import { sendMessage } from "../controllers/messages";
+import { getMessages, sendMessage } from "../controllers/messages";
 
 const router = Router()
 
@@ -9,5 +9,6 @@ router.get("/conversation", (req, res) => {
 })
 
 router.post("/send/:id", protect, sendMessage)
+router.get("/:id", protect, getMessages)
 
 export default router

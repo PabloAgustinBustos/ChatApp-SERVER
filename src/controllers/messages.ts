@@ -52,8 +52,40 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
 
     // TODO SocketIO implementation
-    
+
     res.status(201).json({ newMessage })
+  } catch(e) {
+    res.status(500).json({ message: "Internal server error", error: e })
+    return
+  }
+}
+
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const { id: userToChatId } = req.params
+    const senderId = req.user.id
+
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        participantIds: {
+          hasEvery: [senderId, userToChatId]
+        }
+      },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: "asc"
+          }
+        }
+      }
+    })
+
+    if (!conversation) {
+      res.status(200).json([])
+      return 
+    }
+
+    res.status(200).json(conversation.messages)
   } catch(e) {
     res.status(500).json({ message: "Internal server error", error: e })
     return
