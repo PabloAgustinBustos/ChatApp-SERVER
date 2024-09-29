@@ -23,7 +23,7 @@ export const signup = async(req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { username } })
 
     if (user) {
-      res.status(400).json({ error: "username already exists" })
+      const obj = res.status(400).json({ error: "username already exists" })
       return
     }
 
@@ -49,8 +49,11 @@ export const signup = async(req: Request, res: Response) => {
       // Generamos el token
       generateToken(newUser.id, res)
 
-      res.status(201).json({
-        newUser
+      res.status(200).json({
+        id: newUser.id,
+        fullname: newUser.fullname,
+        username: newUser.username,
+        profilePicture: newUser.profilePicture
       })
     } else {
       res.status(400).json({
@@ -64,9 +67,43 @@ export const signup = async(req: Request, res: Response) => {
 }
 
 export const login = async(req: Request, res: Response) => {
+  try {
+    const { username, password } = req.body
 
+    const user = await prisma.user.findUnique({ where: { username } })
+
+    if (!user) {
+      const obj = res.status(404).json({ error: "Invalid username" })
+      return
+    }
+
+    const isPasswordCorrect = await bcryptjs.compare(password, user.password)
+
+    if (!isPasswordCorrect) {
+      const obj = res.status(404).json({ error: "Invalid password" })
+      return
+    }
+
+    generateToken(user.id, res)
+
+    res.status(200).json({
+      id: user.id,
+      fullname: user.fullname,
+      username: user.username,
+      profilePicture: user.profilePicture
+    })
+  } catch(e) {
+    res.status(500).json({ message: "Internal server error", error: e })
+    return 
+  }
 }
 
 export const logout = async(req: Request, res: Response) => {
-
+  try {
+    res.cookie("jwt", "", { maxAge: 0 })
+    res.status(200).json({ message: "Logout successfully" })
+  } catch(e) {
+    res.status(500).json({ message: "Internal server error", error: e })
+    return
+  }
 }
