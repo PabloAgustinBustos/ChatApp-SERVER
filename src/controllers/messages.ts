@@ -91,3 +91,29 @@ export const getMessages = async (req: Request, res: Response) => {
     return
   }
 }
+
+export const getConversations = async (req: Request, res: Response) => {
+  try {
+    const authUser = req.user
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          not: authUser.id
+        }
+      },
+
+      select: {
+        id: true,
+        fullname: true,
+        username: true,
+        profilePicture: true
+      }
+    })
+
+    res.status(200).json({ users })
+  } catch(e) {
+    res.status(500).json({ message: "Internal server error", error: e })
+    return
+  }
+}
